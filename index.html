@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geox </title>
+    <style>
+        body, html { margin: 0; padding: 0; overflow: hidden; font-family: Arial, sans-serif; }
+        #canvas { width: 100%; height: 100%; position: absolute; }
+        #editor { position: absolute; right: 0; top: 0; width: 300px; height: 100%; background: rgba(40,40,40,0.8); color: white; padding: 10px; overflow-y: auto; }
+        #toolbar { position: absolute; left: 0; top: 0; background: rgba(40,40,40,0.8); color: white; padding: 10px; }
+        .panel { margin-bottom: 10px; border-bottom: 1px solid #555; padding-bottom: 10px; }
+        input, select, button { margin: 5px 0; width: 100%; }
+        button { background: #4CAF50; color: white; border: none; padding: 8px; cursor: pointer; }
+        button:hover { background: #45a049; }
+        textarea { width: 100%; height: 150px; margin: 5px 0; background: #333; color: white; font-family: monospace; }
+        .joystick { position: absolute; bottom: 20px; left: 20px; width: 100px; height: 100px; background: rgba(255,255,255,0.2); border-radius: 50%; }
+        .joystick-handle { position: absolute; top: 25px; left: 25px; width: 50px; height: 50px; background: rgba(255,255,255,0.5); border-radius: 50%; }
+        .hidden { display: none; }
+        #fps { position: absolute; top: 10px; left: 10px; color: white; background: rgba(0,0,0,0.5); padding: 5px; }
+    </style>
+</head>
+<body>
+    <div id="canvas"></div>
+    <div id="fps">FPS: 0</div>
+    
+    <div id="toolbar">
+        <button id="toggleEditor">Toggle Editor</button>
+        <button id="toggleCamera">Switch Camera</button>
+        <button id="saveScene">Save Scene</button>
+        <button id="loadScene">Load Scene</button>
+        <input type="file" id="fileInput" class="hidden" accept=".json">
+    </div>
+    
+    <div id="editor">
+        <div class="panel">
+            <h3>Add Object</h3>
+            <select id="objectType">
+                <option value="cube">Cube</option>
+                <option value="sphere">Sphere</option>
+                <option value="plane">Plane</option>
+                <option value="model">3D Model</option>
+            </select>
+            <input type="text" id="objectName" placeholder="Object Name">
+            <button id="addObject">Add Object</button>
+        </div>
+        
+        <div class="panel">
+            <h3>Scene Objects</h3>
+            <select id="objectList" size="5"></select>
+            <button id="deleteObject">Delete Selected</button>
+        </div>
+        
+        <div class="panel">
+            <h3>Properties</h3>
+            <div id="properties"></div>
+        </div>
+        
+        <div class="panel">
+            <h3>Script</h3>
+            <textarea id="scriptEditor">// Write your code here
+function update(delta) {
+    // This runs every frame
+    // 'this' refers to the object
+    this.rotation.y += 0.01;
+}</textarea>
+            <button id="applyScript">Apply Script</button>
+        </div>
+        
+        <div class="panel">
+            <h3>Shader</h3>
+            <textarea id="shaderEditor">// GLSL Fragment Shader
+uniform float time;
+void main() {
+    gl_FragColor = vec4(sin(time), cos(time), 0.5, 1.0);
+}</textarea>
+            <button id="applyShader">Apply Shader</button>
+        </div>
+    </div>
+    
+    <div class="joystick hidden">
+        <div class="joystick-handle"></div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>const Engine=(()=>{let e,t,n,a,i,s,r,o,l={},c=[],d=null,h="editor",u=0,p=0,m=performance.now(),f={x:0,y:0,z:0},g=!1,y=!1,v={forward:0,right:0},E=new THREE.Vector3,b={},T={},w=new THREE.Clock,x={scene:null,camera:null,renderer:null,physics:!1,selected:null,init:function(){e=new THREE.Scene,e.background=new THREE.Color(0x87ceeb),t=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,.1,1e3),t.position.set(5,5,5),t.lookAt(0,0,0),n=new THREE.WebGLRenderer({antialias:!0}),n.setSize(window.innerWidth,window.innerHeight),document.getElementById("canvas").appendChild(n.domElement),a=new THREE.AmbientLight(16777215,.5),e.add(a),i=new THREE.DirectionalLight(16777215,.8),i.position.set(10,10,10),e.add(i),s=new THREE.GridHelper(20,20),e.add(s);const o=new THREE.BoxGeometry(1,1,1),l=new THREE.MeshStandardMaterial({color:16737095});r=new THREE.Mesh(o,l),r.position.set(0,0,0),e.add(r),this.scene=e,this.camera=t,this.renderer=n,this.setupEventListeners(),this.updateObjectList(),this.animate()},setupEventListeners:function(){window.addEventListener("resize",()=>{t.aspect=window.innerWidth/window.innerHeight,t.updateProjectionMatrix(),n.setSize(window.innerWidth,window.innerHeight)}),document.getElementById("addObject").addEventListener("click",()=>{const t=document.getElementById("objectType").value,n=document.getElementById("objectName").value||"Object_"+Math.floor(1e4*Math.random());this.addObject(t,n)}),document.getElementById("objectList").addEventListener("change",t=>{const n=t.target.value;this.selectObject(n)}),document.getElementById("deleteObject").addEventListener("click",()=>{this.deleteSelected()}),document.getElementById("applyScript").addEventListener("click",()=>{if(this.selected){const e=document.getElementById("scriptEditor").value;this.applyScript(this.selected,e)}}),document.getElementById("applyShader").addEventListener("click",()=>{if(this.selected){const e=document.getElementById("shaderEditor").value;this.applyShader(this.selected,e)}}),document.getElementById("toggleEditor").addEventListener("click",()=>{const e=document.getElementById("editor");"none"===e.style.display?e.style.display="block":e.style.display="none"}),document.getElementById("toggleCamera").addEventListener("click",()=>{this.toggleCameraMode()}),document.getElementById("saveScene").addEventListener("click",()=>{this.saveScene()}),document.getElementById("loadScene").addEventListener("click",()=>{document.getElementById("fileInput").click()}),document.getElementById("fileInput").addEventListener("change",e=>{if(e.target.files.length>0){const t=new FileReader;t.onload=e=>{const t=JSON.parse(e.target.result);this.loadScene(t)},t.readAsText(e.target.files[0])}}),n.domElement.addEventListener("mousedown",e=>{if("editor"===h){const n=this.getMousePosition(e),a=this.raycast(n.x,n.y);a.length>0&&this.selectObject(a[0].object.uuid)}}),document.addEventListener("keydown",e=>{switch(e.key.toLowerCase()){case"w":b.forward=!0;break;case"s":b.backward=!0;break;case"a":b.left=!0;break;case"d":b.right=!0;break;case"space":b.up=!0;break;case"shift":b.down=!0}}),document.addEventListener("keyup",e=>{switch(e.key.toLowerCase()){case"w":b.forward=!1;break;case"s":b.backward=!1;break;case"a":b.left=!1;break;case"d":b.right=!1;break;case"space":b.up=!1;break;case"shift":b.down=!1}}),document.addEventListener("mousemove",e=>{if("fps"===h&&g){const n=.002;T.x-=e.movementY*n,T.y-=e.movementX*n,T.x=Math.max(-.5*Math.PI,Math.min(.5*Math.PI,T.x))}}),document.addEventListener("mousedown",()=>{"fps"===h&&(g=!0)}),document.addEventListener("mouseup",()=>{"fps"===h&&(g=!1)});const o=document.querySelector(".joystick"),l=document.querySelector(".joystick-handle");o.addEventListener("touchstart",e=>{e.preventDefault(),y=!0;const t=e.touches[0],n=o.getBoundingClientRect();f.x=t.clientX-n.left-n.width/2,f.y=t.clientY-n.top-n.height/2;const a=Math.min(n.width/2,Math.sqrt(f.x*f.x+f.y*f.y));if(a>0){const e=a/Math.sqrt(f.x*f.x+f.y*f.y);f.x*=e,f.y*=e}l.style.transform=`translate(${f.x}px, ${f.y}px)`,v.forward=-f.y/50,v.right=f.x/50}),o.addEventListener("touchmove",e=>{if(e.preventDefault(),y){const t=e.touches[0],n=o.getBoundingClientRect(),a=t.clientX-n.left-n.width/2,i=t.clientY-n.top-n.height/2,s=Math.sqrt(a*a+i*i),r=Math.min(n.width/2,s);if(r>0){const e=r/s;f.x=a*e,f.y=i*e}l.style.transform=`translate(${f.x}px, ${f.y}px)`,v.forward=-f.y/50,v.right=f.x/50}}),o.addEventListener("touchend",e=>{e.preventDefault(),y=!1,f.x=0,f.y=0,l.style.transform="translate(0, 0)",v.forward=0,v.right=0})},addObject:function(t,n){let a;switch(t){case"cube":a=new THREE.BoxGeometry(1,1,1);break;case"sphere":a=new THREE.SphereGeometry(.5,32,32);break;case"plane":a=new THREE.PlaneGeometry(1,1);break;case"model":return void console.log("Custom model loading not implemented yet")}const i=new THREE.MeshStandardMaterial({color:16777215*Math.random()}),s=new THREE.Mesh(a,i);s.position.set(0,1,0),s.name=n,s.userData.scripts=[],e.add(s),this.updateObjectList(),this.selectObject(s.uuid)},selectObject:function(e){this.selected=e;const t=this.getObjectByUUID(e);if(t){document.getElementById("objectList").value=e;const n=document.getElementById("properties");n.innerHTML="",this.addPropertyControl(n,"Position X",t.position.x,(e=>{t.position.x=parseFloat(e)})),this.addPropertyControl(n,"Position Y",t.position.y,(e=>{t.position.y=parseFloat(e)})),this.addPropertyControl(n,"Position Z",t.position.z,(e=>{t.position.z=parseFloat(e)})),this.addPropertyControl(n,"Rotation X",t.rotation.x,(e=>{t.rotation.x=parseFloat(e)})),this.addPropertyControl(n,"Rotation Y",t.rotation.y,(e=>{t.rotation.y=parseFloat(e)})),this.addPropertyControl(n,"Rotation Z",t.rotation.z,(e=>{t.rotation.z=parseFloat(e)})),this.addPropertyControl(n,"Scale X",t.scale.x,(e=>{t.scale.x=parseFloat(e)})),this.addPropertyControl(n,"Scale Y",t.scale.y,(e=>{t.scale.y=parseFloat(e)})),this.addPropertyControl(n,"Scale Z",t.scale.z,(e=>{t.scale.z=parseFloat(e)})),this.addColorControl(n,"Color",t.material.color.getHex(),(e=>{t.material.color.setHex(parseInt(e.replace("#","0x"),16))}));const a=t.userData.scripts&&t.userData.scripts.length>0?t.userData.scripts[0]:"// Write your code here\nfunction update(delta) {\n    // This runs every frame\n    // 'this' refers to the object\n    this.rotation.y += 0.01;\n}";document.getElementById("scriptEditor").value=a}},addPropertyControl:function(e,t,n,a){const i=document.createElement("div");i.innerHTML=`<label>${t}: </label>`,i.style.margin="5px 0";const s=document.createElement("input");s.type="number",s.step="0.1",s.value=n,s.addEventListener("change",()=>{a(s.value)}),i.appendChild(s),e.appendChild(i)},addColorControl:function(e,t,n,a){const i=document.createElement("div");i.innerHTML=`<label>${t}: </label>`,i.style.margin="5px 0";const s=document.createElement("input");s.type="color",s.value="#"+n.toString(16).padStart(6,"0"),s.addEventListener("change",()=>{a(s.value)}),i.appendChild(s),e.appendChild(i)},deleteSelected:function(){if(this.selected){const t=this.getObjectByUUID(this.selected);t&&(e.remove(t),this.selected=null,this.updateObjectList(),document.getElementById("properties").innerHTML="")}},updateObjectList:function(){const t=document.getElementById("objectList");t.innerHTML="",e.traverse(e=>{e.isMesh&&(e!==r&&e!==s||e===r&&e===s||(o=document.createElement("option"),o.value=e.uuid,o.text=e.name||e.uuid,t.appendChild(o)))})},getObjectByUUID:function(t){let n=null;return e.traverse(e=>{e.uuid===t&&(n=e)}),n},applyScript:function(e,t){const n=this.getObjectByUUID(e);if(n){n.userData.scripts=[t];try{const e=new Function("delta",t);n.userData.update=e}catch(e){console.error("Script error:",e)}}},applyShader:function(e,t){const n=this.getObjectByUUID(e);if(n){try{const e={uniforms:{time:{value:0}},fragmentShader:t},a=new THREE.ShaderMaterial(e);n.material=a}catch(e){console.error("Shader error:",e)}}},getMousePosition:function(e){const t=n.domElement.getBoundingClientRect();return{x:(e.clientX-t.left)/t.width*2-1,y:-(e.clientY-t.top)/t.height*2+1}},raycast:function(t,n){E.set(t,n,.5).unproject(this.camera);const a=new THREE.Raycaster(this.camera.position,E.sub(this.camera.position).normalize()),i=[];return a.intersectObjects(e.children,!0,i),i},toggleCameraMode:function(){"editor"===h?(h="fps",document.querySelector(".joystick").classList.remove("hidden"),document.getElementById("editor").style.display="none",this.camera.position.set(0,1.7,0),this.camera.rotation.set(0,0,0),T.x=0,T.y=0):(h="editor",document.querySelector(".joystick").classList.add("hidden"),document.getElementById("editor").style.display="block",this.camera.position.set(5,5,5),this.camera.lookAt(0,0,0))},saveScene:function(){const t={objects:[]};e.traverse(e=>{if(e.isMesh&&e!==r&&e!==s){const n={uuid:e.uuid,name:e.name,type:e.geometry.type,position:{x:e.position.x,y:e.position.y,z:e.position.z},rotation:{x:e.rotation.x,y:e.rotation.y,z:e.rotation.z},scale:{x:e.scale.x,y:e.scale.y,z:e.scale.z},color:e.material.color.getHex(),scripts:e.userData.scripts||[]};t.objects.push(n)}});const n=JSON.stringify(t),a=new Blob([n],{type:"application/json"}),i=URL.createObjectURL(a),o=document.createElement("a");o.href=i,o.download="scene.json",o.click()},loadScene:function(t){if(e.children.length>0){const t=[...e.children];for(let n=0;n<t.length;n++){const a=t[n];a!==r&&a!==s&&a!==a&&a!==i&&e.remove(a)}}if(t.objects&&t.objects.length>0)for(let e=0;e<t.objects.length;e++){const n=t.objects[e];let a;switch(n.type){case"BoxGeometry":a="cube";break;case"SphereGeometry":a="sphere";break;case"PlaneGeometry":a="plane";break;default:a="cube"}this.addObject(a,n.name);const i=this.getObjectByUUID(n.uuid);i&&(i.position.set(n.position.x,n.position.y,n.position.z),i.rotation.set(n.rotation.x,n.rotation.y,n.rotation.z),i.scale.set(n.scale.x,n.scale.y,n.scale.z),i.material.color.setHex(n.color),n.scripts&&n.scripts.length>0&&this.applyScript(i.uuid,n.scripts[0]))}this.updateObjectList()},updateCamera:function(e){if("fps"===h){const n=5*e;let a=!1;if(b.forward&&(this.camera.position.z-=n*Math.cos(T.y),this.camera.position.x-=n*Math.sin(T.y),a=!0),b.backward&&(this.camera.position.z+=n*Math.cos(T.y),this.camera.position.x+=n*Math.sin(T.y),a=!0),b.left&&(this.camera.position.x-=n*Math.cos(T.y),this.camera.position.z+=n*Math.sin(T.y),a=!0),b.right&&(this.camera.position.x+=n*Math.cos(T.y),this.camera.position.z-=n*Math.sin(T.y),a=!0),b.up&&(this.camera.position.y+=n,a=!0),b.down&&(this.camera.position.y-=n,a=!0),v.forward&&(this.camera.position.z-=n*Math.cos(T.y)*v.forward,this.camera.position.x-=n*Math.sin(T.y)*v.forward,a=!0),v.right&&(this.camera.position.x+=n*Math.cos(T.y)*v.right,this.camera.position.z-=n*Math.sin(T.y)*v.right,a=!0),a){const e=new THREE.Euler(0,T.y,0,"YXZ");this.camera.quaternion.setFromEuler(e),t.rotation.x=T.x}}},animate:function(){requestAnimationFrame(this.animate.bind(this));const e=w.getDelta();this.updateCamera(e),this.scene.traverse(t=>{t.userData&&t.userData.update&&t.userData.update.call(t,e),t.material&&t.material.uniforms&&t.material.uniforms.time&&(t.material.uniforms.time.value+=e)}),this.renderer.render(this.scene,this.camera),u++,p++;const t=performance.now();t-m>=1e3&&(document.getElementById("fps").textContent=`FPS: ${p}`,p=0,m=t)}};return x})();window.onload=function(){Engine.init()};</script>
+</body>
+</html>
