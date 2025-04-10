@@ -22,22 +22,24 @@ jobs:
         run: |
           mkdir -p commits
           cd commits
-          account_creation_date="2024-04-23"
-          creation_timestamp=$(date -d "$account_creation_date" +%s)
-          current_timestamp=$(date +%s)
-          diff_seconds=$((current_timestamp - creation_timestamp))
+          start_date="2024-04-23"
+          current_date=$(date +"%Y-%m-%d")
+          start_timestamp=$(date -d "$start_date" +%s)
+          end_timestamp=$(date -d "$current_date" +%s)
+          
+          diff_seconds=$((end_timestamp - start_timestamp))
           diff_days=$((diff_seconds / 86400))
 
           for day_offset in $(seq 0 $diff_days)
           do
-            commit_day=$(($current_timestamp - $day_offset * 86400))
-            commit_date=$(date -d @$commit_day +"%Y-%m-%d %H:%M:%S")
+            commit_timestamp=$((start_timestamp + day_offset * 86400))
+            commit_date=$(date -d @$commit_timestamp +"%Y-%m-%d %H:%M:%S")
 
             for i in $(seq 1 25)
             do
-              echo $RANDOM > "file_day_$day_offset_$i.txt"
-              git add "file_day_$day_offset_$i.txt"
-              GIT_COMMITTER_DATE="$commit_date" git commit --date "$commit_date" -m "Commit $i at $commit_date"
+              echo "$RANDOM" > "file_day_${day_offset}_${i}.txt"
+              git add "file_day_${day_offset}_${i}.txt"
+              GIT_COMMITTER_DATE="$commit_date" git commit --date "$commit_date" -m "Commit ${i} at ${commit_date}"
             done
           done
 
