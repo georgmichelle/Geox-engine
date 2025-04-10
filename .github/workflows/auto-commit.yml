@@ -31,8 +31,8 @@ jobs:
           done
 
       - name: Push commits
-  run: |
-    git remote set-url origin https://$GH_TOKEN@github.com/georgmichelle/Geox-engine.git
-    git push origin main
-  env:
-    GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          git remote set-url origin https://$GH_TOKEN@github.com/georgmichelle/Geox-engine.git
+          git push origin main
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
