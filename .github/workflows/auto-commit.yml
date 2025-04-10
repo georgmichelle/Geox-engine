@@ -32,7 +32,7 @@ jobs:
 
       - name: Push commits
         run: |
-          git remote set-url origin https://$GH_TOKEN@github.com/georgmichelle/Mobi-Exclusive-Comapny-System.git
+          git remote set-url origin https://$GH_TOKEN@github.com/georgmichelle/Geox-engine.git
           git push origin main
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
