@@ -22,7 +22,7 @@ jobs:
         run: |
           mkdir -p commits
           cd commits
-          num_commits=$((RANDOM % 260 + 250))  # 25 to 50 commits
+          num_commits=$((RANDOM % 260 + 250))  # 250 to 260 commits
           for i in $(seq 1 $num_commits)
           do
             echo $RANDOM > "file_$i.txt"
@@ -32,4 +32,7 @@ jobs:
 
       - name: Push commits
         run: |
+          git remote set-url origin https://$GH_TOKEN@github.com/georgmichelle/Mobi-Exclusive-Comapny-System.git
           git push origin main
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
