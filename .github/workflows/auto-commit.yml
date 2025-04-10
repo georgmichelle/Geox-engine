@@ -1,0 +1,35 @@
+name: Auto Commit
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"  # Runs every 5 minutes
+  workflow_dispatch:
+
+jobs:
+  commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Setup Git
+        run: |
+          git config --global user.name "georgmichelle"
+          git config --global user.email "geeg40283@gmail.com"
+
+      - name: Generate commits
+        run: |
+          mkdir -p commits
+          cd commits
+          num_commits=$((RANDOM % 260 + 250))  # 25 to 50 commits
+          for i in $(seq 1 $num_commits)
+          do
+            echo $RANDOM > "file_$i.txt"
+            git add .
+            git commit -m "Commit $i at $(date)"
+          done
+
+      - name: Push commits
+        run: |
+          git push origin main
