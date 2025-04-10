@@ -22,7 +22,7 @@ jobs:
         run: |
           mkdir -p commits
           cd commits
-          start_date="2024-04-23"
+          start_date="2024-06-1"
           current_date=$(date +"%Y-%m-%d")
           start_timestamp=$(date -d "$start_date" +%s)
           end_timestamp=$(date -d "$current_date" +%s)
@@ -35,7 +35,7 @@ jobs:
             commit_timestamp=$((start_timestamp + day_offset * 86400))
             commit_date=$(date -d @$commit_timestamp +"%Y-%m-%d %H:%M:%S")
 
-            for i in $(seq 1 25)
+            for i in $(seq 1 5)
             do
               echo "$RANDOM" > "file_day_${day_offset}_${i}.txt"
               git add "file_day_${day_offset}_${i}.txt"
