@@ -33,7 +33,7 @@ jobs:
             commit_day=$(($current_timestamp - $day_offset * 86400))
             commit_date=$(date -d @$commit_day +"%Y-%m-%d %H:%M:%S")
             
-            for i in $(seq 1 440)
+            for i in $(seq 1 25)
             do
               echo $RANDOM > "file_day_$day_offset_$i.txt"
               git add .
